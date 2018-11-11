@@ -15,8 +15,8 @@
    GPR_VAR        UDATA
    W_TEMP         RES     1      ; w register for context saving (ACCESS)
    STATUS_TEMP    RES     1      ; status used for context saving
-   DELAY1	 RES	    1
-   DELAY2	 RES	    1
+   DELAY1	    RES	    1
+   DELAY2	    RES	    1
    POT1           RES     1
    POT2           RES     1
    POT3           RES     1
