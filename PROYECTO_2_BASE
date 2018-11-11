@@ -15,8 +15,8 @@
    GPR_VAR        UDATA
    W_TEMP         RES     1      ; w register for context saving (ACCESS)
    STATUS_TEMP    RES     1      ; status used for context saving
-   DELAY1	   RES	    1
-   DELAY2	   RES	    1
+   DELAY1	   RES	   1
+   DELAY2	   RES	   1
    POT1           RES     1
    POT2           RES     1
    POT3           RES     1
@@ -56,11 +56,11 @@ LOOP:
     BCF     ADCON0,CHS2
     BCF     ADCON0,CHS1
     BCF     ADCON0,CHS0
-    BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
+    BSF	 ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
 CHECK_ADC1:
     BTFSC   ADCON0, GO			; revisa que terminó la conversión
     GOTO    $-1
-    BCF	 PIR1, ADIF			; borramos la bandera del adc
+    BCF	PIR1, ADIF			; borramos la bandera del adc
     MOVF    ADRESH, W
     MOVWF   POT1			; mueve adresh a la variable POT1
 
