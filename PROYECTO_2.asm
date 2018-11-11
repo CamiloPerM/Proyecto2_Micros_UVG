@@ -110,7 +110,25 @@ CHECK_RCIF:			    ; RECIBE EN RX y lo muestra en PORTD
     MOVWF   PORTD
     
 CHECK_TXIF: 
-    MOVFW   PORTB		    ; ENVÍA PORTB POR EL TX
+    MOVFW   POT1		    ; ENVÍA PORTB POR EL TX
+    MOVWF   TXREG
+   
+    BTFSS   PIR1, TXIF
+    GOTO    $-1
+    
+    MOVFW   POT2		    ; ENVÍA PORTB POR EL TX
+    MOVWF   TXREG
+   
+    BTFSS   PIR1, TXIF
+    GOTO    $-1
+    
+    MOVFW   POT3		    ; ENVÍA PORTB POR EL TX
+    MOVWF   TXREG
+   
+    BTFSS   PIR1, TXIF
+    GOTO    $-1
+    
+    MOVFW   POT4		    ; ENVÍA PORTB POR EL TX
     MOVWF   TXREG
    
     BTFSS   PIR1, TXIF
