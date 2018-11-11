@@ -43,7 +43,7 @@ START
     CALL    CONFIG_IO
     CALL    CONFIG_TX_RX		; 10417hz
     CALL    CONFIG_ADC			; canal 0, fosc/8, adc on, justificado a la izquierda, Vref interno (0-5V)
-    CALL    COFIG_PWM1
+    CALL    CONFIG_PWM1
     BANKSEL PORTA
 ;*******************************************************************************
    
