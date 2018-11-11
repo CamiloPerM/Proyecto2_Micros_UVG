@@ -1,11 +1,7 @@
 ;*******************************************************************************
-;                                                                              *
-;    Filename:    Serial.asm
-;    Autor: José Eduardo Morales					
-;    Description: EJEMPLO de serial y ADC                                      *
-;   El código convierte un valor del adc y lo guarda en el puerto b. A la vez
-;   lo envía a través del TX. También recibe un dato y este lo muestra en el 
-;   puerto d. Para ver funcionar ambos se puede colocar un jumper entre rx y tx
+;    Filename:    PROYECTO_2.asm
+;    Autores: Camilo Perafán Montoya & David Vela Aguilera				
+;    Description: 
 ;*******************************************************************************
 #include "p16f887.inc"
 
@@ -21,6 +17,10 @@
    STATUS_TEMP    RES        1      ; status used for context saving
    DELAY1	  RES	    1
    DELAY2	  RES	    1
+   POT1           RES        1
+   POT2           RES        1
+   POT3           RES        1
+   POT4           RES        1
 ;*******************************************************************************
 ; Reset Vector
 ;*******************************************************************************
@@ -43,6 +43,7 @@ START
     CALL    CONFIG_IO
     CALL    CONFIG_TX_RX		; 10417hz
     CALL    CONFIG_ADC			; canal 0, fosc/8, adc on, justificado a la izquierda, Vref interno (0-5V)
+    CALL    COFIG_PWM1
     BANKSEL PORTA
 ;*******************************************************************************
    
@@ -51,13 +52,56 @@ START
 ;*******************************************************************************
 LOOP:
     CALL    DELAY_50MS
+    BCF     ADCON0,CHS3
+    BCF     ADCON0,CHS2
+    BCF     ADCON0,CHS1
+    BCF     ADCON0,CHS0
     BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
-CHECK_AD:
+CHECK_ADC1:
     BTFSC   ADCON0, GO			; revisa que terminó la conversión
     GOTO    $-1
     BCF	    PIR1, ADIF			; borramos la bandera del adc
     MOVF    ADRESH, W
-    MOVWF   PORTB			; mueve adresh al puerto b
+    MOVWF   POT1		; mueve adresh a la variable POT1
+    
+    CALL    DELAY_50MS
+    BCF     ADCON0,CHS3
+    BCF     ADCON0,CHS2
+    BCF     ADCON0,CHS1
+    BSF     ADCON0,CHS0
+    BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
+CHECK_ADC2:
+    BTFSC   ADCON0, GO			; revisa que terminó la conversión
+    GOTO    $-1
+    BCF	    PIR1, ADIF			; borramos la bandera del adc
+    MOVF    ADRESH, W
+    MOVWF   POT2		; mueve adresh a la variable POT2
+    
+    CALL    DELAY_50MS
+    BCF     ADCON0,CHS3
+    BCF     ADCON0,CHS2
+    BSF     ADCON0,CHS1
+    BCF     ADCON0,CHS0
+    BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
+CHECK_ADC3:
+    BTFSC   ADCON0, GO			; revisa que terminó la conversión
+    GOTO    $-1
+    BCF	    PIR1, ADIF			; borramos la bandera del adc
+    MOVF    ADRESH, W
+    MOVWF   POT3		; mueve adresh a la variable POT3
+    
+    CALL    DELAY_50MS
+    BCF     ADCON0,CHS3
+    BCF     ADCON0,CHS2
+    BSF     ADCON0,CHS1
+    BSF     ADCON0,CHS0
+    BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
+CHECK_ADC4:
+    BTFSC   ADCON0, GO			; revisa que terminó la conversión
+    GOTO    $-1
+    BCF	    PIR1, ADIF			; borramos la bandera del adc
+    MOVF    ADRESH, W
+    MOVWF   POT1		; mueve adresh a la variable POT1
     
 CHECK_RCIF:			    ; RECIBE EN RX y lo muestra en PORTD
     BTFSS   PIR1, RCIF
@@ -108,12 +152,24 @@ CHECK_TXIF:
 CONFIG_IO
     BANKSEL TRISA
     CLRF    TRISA
+    
+    BSF     TRISA,RA0
+    BSF     TRISA,RA1
+    BSF     TRISA,RA2
+    BSF     TRISA,RA3
+    
     CLRF    TRISB
     CLRF    TRISC
     CLRF    TRISD
     CLRF    TRISE
     BANKSEL ANSEL
     CLRF    ANSEL
+    
+    BSF     ANSEL,0
+    BSF     ANSEL,1
+    BSF     ANSEL,2
+    BSF     ANSEL,3
+    
     CLRF    ANSELH
     BANKSEL PORTA
     CLRF    PORTA
@@ -136,6 +192,38 @@ CONFIG_IO
     BSF ADCON0, ADON		; ENCIENDO EL MÓDULO ADC
     
     RETURN
+;-----------------------------------------------
+CONFIG_PWM1
+    BANKSEL TRISC
+    BSF	    TRISC, RC1		;SE ESTABLECE RC1 / CCP2 COMO ENTRADA
+    MOVLW   .155
+    MOVWF   PR2			;SE COLOCA EL VALOR DEL PERIODO DE LA SEÑAL DE 20mS
+    
+    BANKSEL PORTA
+    BSF	    CCP2CON, CCP2M3
+    BSF	    CCP2CON, CCP2M2
+    BSF	    CCP2CON, CCP2M1
+    BSF	    CCP2CON, CCP2M0	;MODO PWM
+    
+    MOVLW   B'00011011'
+    MOVWF   CCPR2L		;MSB DEL DUTY CYCLE
+    BSF	    CCP2CON, DC2B0
+    BSF	    CCP2CON, DC2B1	;LSB DEL DUTY CYCLE
+    
+    BCF	    PIR1, TMR2IF
+    
+    BSF	    T2CON, T2CKPS1
+    BSF	    T2CON, T2CKPS0	;PRESCALER 1:16
+    
+    BSF	    T2CON, TMR2ON       ;SE HABILITA EL TMR2
+    BTFSS   PIR1, TMR2IF
+    GOTO    $-1
+    BCF	    PIR1, TMR2IF
+    
+    BANKSEL TRISC
+    BCF	    TRISC, RC1		;RC1 / CCP2 SALIDA PWM
+    RETURN
+  
 ;-----------------------------------------------
 DELAY_50MS
     MOVLW   .100		    ; 1US 
