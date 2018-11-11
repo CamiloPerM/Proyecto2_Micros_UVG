@@ -56,7 +56,7 @@ LOOP:
     BCF     ADCON0,CHS2
     BCF     ADCON0,CHS1
     BCF     ADCON0,CHS0
-    BSF  ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
+    BSF    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
 CHECK_ADC1:
     BTFSC   ADCON0, GO			; revisa que terminó la conversión
     GOTO    $-1
