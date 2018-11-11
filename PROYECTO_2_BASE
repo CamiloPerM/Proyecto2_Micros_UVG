@@ -69,11 +69,11 @@ CHECK_ADC1:
     BCF     ADCON0,CHS2
     BCF     ADCON0,CHS1
     BSF     ADCON0,CHS0
-    BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
+    BSF     ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
 CHECK_ADC2:
     BTFSC   ADCON0, GO			; revisa que terminó la conversión
     GOTO    $-1
-    BCF	    PIR1, ADIF			; borramos la bandera del adc
+    BCF	 PIR1, ADIF			; borramos la bandera del adc
     MOVF    ADRESH, W
     MOVWF   POT2			; mueve adresh a la variable POT2
 
@@ -82,8 +82,8 @@ CHECK_ADC2:
     BCF     ADCON0,CHS2
     BSF     ADCON0,CHS1
     BCF     ADCON0,CHS0
-    BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
-CHECK_ADC1:
+    BSF     ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
+CHECK_ADC3:
     BTFSC   ADCON0, GO			; revisa que terminó la conversión
     GOTO    $-1
     BCF	    PIR1, ADIF			; borramos la bandera del adc
@@ -95,8 +95,8 @@ CHECK_ADC1:
     BCF     ADCON0,CHS2
     BSF     ADCON0,CHS1
     BSF     ADCON0,CHS0
-    BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
-CHECK_ADC1:
+    BSF     ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
+CHECK_ADC4:
     BTFSC   ADCON0, GO			; revisa que terminó la conversión
     GOTO    $-1
     BCF	    PIR1, ADIF			; borramos la bandera del adc
