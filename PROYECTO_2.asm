@@ -112,8 +112,8 @@ CHECK_RCIF:			    ; RECIBE EN RX y lo muestra en PORTD
     
 CHECK_TXIF: 
     MOVF    POT1,W		    ; ENVÍA PORTB POR EL TX
-	   MOVWF   CONST  
-    MOVF,   CONST,W
+	MOVWF   CONST  
+    MOVF   CONST,W
     SUBLW   B'00001011'
     BTFSS   STATUS,Z
     GOTO	   NO_IGUAL
@@ -128,7 +128,7 @@ FINAL:
 
     MOVF    POT2,W		    ; ENVÍA PORTB POR EL TX
 	   MOVWF   CONST  
-    MOVF,   CONST,W
+    MOVF   CONST,W
     SUBLW   B'00001011'
     BTFSS   STATUS,Z
     GOTO	   NO_IGUAL2
@@ -143,14 +143,14 @@ FINAL2:
     
     MOVF    POT3,W		    ; ENVÍA PORTB POR EL TX
 	   MOVWF   CONST  
-    MOVF,   CONST,W
+    MOVF   CONST,W
     SUBLW   B'00001011'
     BTFSS   STATUS,Z
     GOTO	   NO_IGUAL3
     MOVLW	  .10
     GOTO    FINAL3
 NO_IGUAL3:
-    MOVF    POT13,W
+    MOVF    POT3,W
 FINAL3:   
     MOVWF   TXREG
     BTFSS   PIR1, TXIF
@@ -158,7 +158,7 @@ FINAL3:
 
     MOVF    POT4,W		    ; ENVÍA PORTB POR EL TX
 	   MOVWF   CONST  
-    MOVF,   CONST,W
+    MOVF   CONST,W
     SUBLW   B'00001011'
     BTFSS   STATUS,Z
     GOTO	   NO_IGUAL4
