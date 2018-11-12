@@ -4,7 +4,7 @@
 ;    Description: 
 ;*******************************************************************************
 #include "p16f887.inc"
-
+"wewewew"
 ; CONFIG1
 ; __config 0xE0F4
  __CONFIG _CONFIG1, _FOSC_INTRC_NOCLKOUT & _WDTE_OFF & _PWRTE_OFF & _MCLRE_OFF & _CP_OFF & _CPD_OFF & _BOREN_OFF & _IESO_OFF & _FCMEN_OFF & _LVP_OFF
