@@ -21,6 +21,7 @@
    POT2           RES        1
    POT3           RES        1
    POT4           RES        1
+   CONST          RES        1
 ;*******************************************************************************
 ; Reset Vector
 ;*******************************************************************************
@@ -110,27 +111,63 @@ CHECK_RCIF:			    ; RECIBE EN RX y lo muestra en PORTD
     MOVWF   PORTD
     
 CHECK_TXIF: 
-    MOVFW   POT1		    ; ENVÍA PORTB POR EL TX
+    MOVF    POT1,W		    ; ENVÍA PORTB POR EL TX
+	   MOVWF   CONST  
+    MOVF,   CONST,W
+    SUBLW   B'00001011'
+    BTFSS   STATUS,Z
+    GOTO	   NO_IGUAL
+    MOVLW	  .10
+    GOTO    FINAL
+NO_IGUAL:
+    MOVF    POT1,W
+FINAL:   
     MOVWF   TXREG
-   
+    BTFSS   PIR1, TXIF
+    GOTO    $-1
+
+    MOVF    POT2,W		    ; ENVÍA PORTB POR EL TX
+	   MOVWF   CONST  
+    MOVF,   CONST,W
+    SUBLW   B'00001011'
+    BTFSS   STATUS,Z
+    GOTO	   NO_IGUAL2
+    MOVLW	  .10
+    GOTO    FINAL2
+NO_IGUAL2:
+    MOVF    POT2,W
+FINAL2:   
+    MOVWF   TXREG
     BTFSS   PIR1, TXIF
     GOTO    $-1
     
-    MOVFW   POT2		    ; ENVÍA PORTB POR EL TX
+    MOVF    POT3,W		    ; ENVÍA PORTB POR EL TX
+	   MOVWF   CONST  
+    MOVF,   CONST,W
+    SUBLW   B'00001011'
+    BTFSS   STATUS,Z
+    GOTO	   NO_IGUAL3
+    MOVLW	  .10
+    GOTO    FINAL3
+NO_IGUAL3:
+    MOVF    POT13,W
+FINAL3:   
     MOVWF   TXREG
-   
     BTFSS   PIR1, TXIF
     GOTO    $-1
-    
-    MOVFW   POT3		    ; ENVÍA PORTB POR EL TX
+
+    MOVF    POT4,W		    ; ENVÍA PORTB POR EL TX
+	   MOVWF   CONST  
+    MOVF,   CONST,W
+    SUBLW   B'00001011'
+    BTFSS   STATUS,Z
+    GOTO	   NO_IGUAL4
+    MOVLW	  .10
+    GOTO    FINAL4
+NO_IGUAL4:
+    MOVF    POT4,W
+FINAL4:   
     MOVWF   TXREG
-   
-    BTFSS   PIR1, TXIF
-    GOTO    $-1
-    
-    MOVFW   POT4		    ; ENVÍA PORTB POR EL TX
-    MOVWF   TXREG
-   
     BTFSS   PIR1, TXIF
     GOTO    $-1
     
