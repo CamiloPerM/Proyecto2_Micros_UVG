@@ -50,6 +50,7 @@ START
     CALL    CONFIG_TX_RX		; 10417hz
     CALL    CONFIG_ADC			; canal 0, fosc/8, adc on, justificado a la izquierda, Vref interno (0-5V)
     CALL    CONFIG_PWM1
+    CALL    CONFIG_TMR1
     BANKSEL PORTA
     MOVLW .1
     MOVWF NUMPOT
@@ -59,12 +60,75 @@ START
 ; CICLO INFINITO
 ;*******************************************************************************
 LOOP:
-    CALL    DELAY_50MS
-    BCF     ADCON0,CHS3
-    BCF     ADCON0,CHS2
-    BCF     ADCON0,CHS1
-    BCF     ADCON0,CHS0
-    BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
+    CALL    PRIMERCANAL 
+    CALL    MUESTRA_SEND    ; SE ENVIA EL PRIMER DATO
+
+    CALL    SEGUNDOCANAL
+    CALL    MUESTRA_SEND    ; SE ENVIA EL SEGUNDO DATO
+
+    CALL    TERCERCANAL
+    CALL    MUESTRA_SEND    ; SE ENVIA EL TERCER DATO
+
+    CALL    CUARTOCANAL
+    CALL    MUESTRA_SEND    ; SE ENVIA EL CUARTO DATO
+    
+    MOVLW   .10                 ; CARACTER DE FIN DE LINEA
+    CALL    SEND   
+    ; EMPIEZA LA CONVERSIÓN
+    
+PRIMERCANAL
+    BCF ADCON0, CHS3
+    BCF ADCON0, CHS2
+    BCF ADCON0, CHS1
+    BCF ADCON0, CHS0            ; SELECCIONAMOS ANS0 PARA MUESTREAR
+    RETURN   
+    
+SEGUNDOCANAL
+    BCF ADCON0, CHS3
+    BCF ADCON0, CHS2
+    BCF ADCON0, CHS1
+    BSF ADCON0, CHS0            ; SELECCIONAMOS ANS1 PARA MUESTREAR
+    RETURN
+
+TERCERCANAL
+    BCF ADCON0, CHS3
+    BCF ADCON0, CHS2
+    BSF ADCON0, CHS1
+    BCF ADCON0, CHS0            ; SELECCIONAMOS ANS2 PARA MUESTREAR
+    RETURN
+
+CUARTOCANAL
+    BCF ADCON0, CHS3
+    BCF ADCON0, CHS2
+    BSF ADCON0, CHS1
+    BSF ADCON0, CHS0            ; SELECCIONAMOS ANS3 PARA MUESTREAR
+    RETURN
+    
+    
+MUESTRA_SEND
+    CALL    DELAY_500US         ; DELAY (SI ES NECESARIO)
+    BSF     ADCON0, GO          ; EMPIECE LA CONVERSIÓN
+    BTFSC   ADCON0, GO          ; revisa que terminó la conversión
+    GOTO    $-1
+    BCF     PIR1, ADIF          ; borramos la bandera del adc
+    MOVF    ADRESH, W
+    SUBLW   .10                 ; VEMOS SI ES 10 PARA NO ENVIARLO
+    BTFSC   STATUS, Z           
+    MOVLW   .11
+    BTFSS   STATUS, Z
+    MOVF    ADRESH, W
+
+    CALL    SEND
+    RETURN
+    
+    
+SEND
+    MOVWF   TXREG               ; ENVIAMOS EL VALOR DE LECTURA POR TXREG
+    BTFSS   PIR1, TXIF          ; REVISAR SI YA SE ENVIÓ EL NÚMERO, SI YA TERMINO CONTINUA
+    GOTO    $-1
+    RETURN
+
+  
 CHECK_ADC1:
     BTFSC   ADCON0, GO			; revisa que terminó la conversión
     GOTO    $-1
@@ -252,6 +316,20 @@ FINAL4:
     
     BANKSEL PORTD
     CLRF    PORTD
+    RETURN
+;--------------------------------------
+CONFIG_TMR1
+    BANKSEL PIE1
+    BSF PIE1, TMR1IE       ;SE HABILITA LA INTERRUPCIÓN
+
+    BANKSEL T1CON
+    MOVLW B'00110001'      ; PRESCALADOR DE 8
+                           ; CARGAMOS 65224
+    MOVWF T1CON
+    MOVLW B'11001000'      ; N NECESARIO EN TMR1L
+    MOVWF TMR1L
+    MOVLW B'11111110'      ; N NECESARIO EN TMR1H
+    MOVWF TMR1H
     RETURN
 ;--------------------------------------
 CONFIG_IO
