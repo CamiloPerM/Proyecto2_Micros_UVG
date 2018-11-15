@@ -35,8 +35,29 @@ RES_VECT  CODE    0x0000            ; processor reset vector
     GOTO    START                   ; go to beginning of program
 
 ;*******************************************************************************
-;ISR       CODE    0x0004           ; interrupt vector location
-;     RETFIE
+ISR       CODE    0x0004           ; interrupt vector location
+PUSH:
+    MOVWF W_TEMP
+    SWAPF STATUS,W
+    MOVWF STATUS_TEMP
+ISR:
+    BTFSS PIR1, TMR1IF  ; TMR1
+    GOTO POP
+
+RTMR1:
+    INCF PORTE, F
+    BCF PIR1, TMR1IF    ; BORRAMOS LA BANDERA DE OVERFLOW DE TIMER1    
+    MOVLW B'11001000'      ; N NECESARIO EN TMR1L
+    MOVWF TMR1L
+    MOVLW B'11111110'      ; N NECESARIO EN TMR1H
+    MOVWF TMR1H
+
+POP:
+    SWAPF STATUS_TEMP,W
+    MOVWF STATUS
+    SWAPF W_TEMP,F
+    SWAPF W_TEMP,W
+    RETFIE
 ;*******************************************************************************
 ; MAIN PROGRAM
 ;*******************************************************************************
@@ -45,12 +66,13 @@ MAIN_PROG CODE                      ; let linker place main program
 
 START
 ;*******************************************************************************
-    CALL    CONFIG_RELOJ		; RELOJ INTERNO DE 500KHz
+    CALL    CONFIG_RELOJ		; RELOJ INTERNO DE 1MHz
     CALL    CONFIG_IO
     CALL    CONFIG_TX_RX		; 10417hz
     CALL    CONFIG_ADC			; canal 0, fosc/8, adc on, justificado a la izquierda, Vref interno (0-5V)
     CALL    CONFIG_PWM1
     CALL    CONFIG_TMR1
+    CALL    CONFIG_INTER
     BANKSEL PORTA
     MOVLW .1
     MOVWF NUMPOT
@@ -60,7 +82,7 @@ START
 ; CICLO INFINITO
 ;*******************************************************************************
 LOOP:
-    CALL    PRIMERCANAL 
+ CALL    PRIMERCANAL 
     CALL    MUESTRA_SEND    ; SE ENVIA EL PRIMER DATO
 
     CALL    SEGUNDOCANAL
@@ -254,9 +276,8 @@ FINAL4:
     MOVLW   .11
     MOVWF   TXREG
     BTFSS   PIR1, TXIF
-    GOTO    $-1
-    
-    GOTO LOOP
+    GOTO    $-1  
+GOTO LOOP
 ;******************************************************************************
  STARTMOT:
      MOVF VARTM, 0
@@ -315,7 +336,7 @@ FINAL4:
     BSF	    TXSTA, TXEN		    ; HABILITO LA TRANSMISION
     
     BANKSEL PORTD
-    CLRF    PORTD
+   
     RETURN
 ;--------------------------------------
 CONFIG_TMR1
@@ -405,6 +426,14 @@ CONFIG_PWM1
     
     BANKSEL TRISC
     BCF	    TRISC, RC1		;RC1 / CCP2 SALIDA PWM
+    RETURN
+    
+;-----------------------------------------------
+CONFIG_INTER
+    BANKSEL INTCON
+    BSF	INTCON,GIE
+    BSF	INTCON,T0IE
+    BSF	INTCON,PEIE
     RETURN
   
 ;-----------------------------------------------
