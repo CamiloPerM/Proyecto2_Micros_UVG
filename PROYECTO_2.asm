@@ -4,7 +4,6 @@
 ;    Description: 
 ;*******************************************************************************
 #include "p16f887.inc"
-
 ; CONFIG1
 ; __config 0xE0F4
  __CONFIG _CONFIG1, _FOSC_INTRC_NOCLKOUT & _WDTE_OFF & _PWRTE_OFF & _MCLRE_OFF & _CP_OFF & _CPD_OFF & _BOREN_OFF & _IESO_OFF & _FCMEN_OFF & _LVP_OFF
@@ -17,6 +16,17 @@
    STATUS_TEMP    RES        1      ; status used for context saving
    DELAY1	  RES	    1
    DELAY2	  RES	    1
+   POT1           RES        1
+   POT2           RES        1
+   POT3           RES        1
+   POT4           RES        1
+   CONST          RES        1
+   MOTOR1         RES        1
+   MOTOR2         RES        1
+   MOTOR3         RES        1
+   MOTOR4         RES        1
+   NUMPOT         RES        1
+   VARTM          RES        1
 ;*******************************************************************************
 ; Reset Vector
 ;*******************************************************************************
@@ -63,15 +73,45 @@ START
     CALL    CONFIG_PWM1
     CALL    CONFIG_INTER
     BANKSEL PORTA
+    MOVLW .1
+    MOVWF NUMPOT
 ;*******************************************************************************
    
 ;*******************************************************************************
 ; CICLO INFINITO
 ;*******************************************************************************
 LOOP:
-
     
     GOTO LOOP
+;******************************************************************************
+ STARTMOT:
+     MOVF VARTM, 0
+     MOVWF MOTOR1
+     MOVLW .2
+     MOVWF NUMPOT
+     GOTO CHECK_TXIF
+     
+ SET2:
+     MOVF VARTM, 0
+     MOVWF MOTOR2
+     MOVLW .4
+     MOVWF NUMPOT
+     GOTO CHECK_TXIF
+
+ SET3:
+     MOVF VARTM, 0
+     MOVWF MOTOR2
+     MOVLW .8
+     MOVWF NUMPOT
+     GOTO CHECK_TXIF
+ SET4:
+     MOVF VARTM, 0
+     MOVWF MOTOR2
+     MOVLW .1
+     MOVWF NUMPOT
+     GOTO CHECK_TXIF
+     
+     
 ;*******************************************************************************
     CONFIG_RELOJ
     BANKSEL TRISA
