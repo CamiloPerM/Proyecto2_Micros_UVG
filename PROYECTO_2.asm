@@ -35,8 +35,29 @@ RES_VECT  CODE    0x0000            ; processor reset vector
     GOTO    START                   ; go to beginning of program
 
 ;*******************************************************************************
-;ISR       CODE    0x0004           ; interrupt vector location
-;     RETFIE
+ISR       CODE    0x0004           ; interrupt vector location
+PUSH:
+    MOVWF W_TEMP
+    SWAPF STATUS,W
+    MOVWF STATUS_TEMP
+ISR:
+    BTFSS PIR1, TMR1IF  ; TMR1
+    GOTO POP
+
+RTMR1:
+    INCF PORTE, F
+    BCF PIR1, TMR1IF    ; BORRAMOS LA BANDERA DE OVERFLOW DE TIMER1    
+    MOVLW B'11001000'      ; N NECESARIO EN TMR1L
+    MOVWF TMR1L
+    MOVLW B'11111110'      ; N NECESARIO EN TMR1H
+    MOVWF TMR1H
+
+POP:
+    SWAPF STATUS_TEMP,W
+    MOVWF STATUS
+    SWAPF W_TEMP,F
+    SWAPF W_TEMP,W
+    RETFIE
 ;*******************************************************************************
 ; MAIN PROGRAM
 ;*******************************************************************************
@@ -45,11 +66,12 @@ MAIN_PROG CODE                      ; let linker place main program
 
 START
 ;*******************************************************************************
-    CALL    CONFIG_RELOJ		; RELOJ INTERNO DE 500KHz
+    CALL    CONFIG_RELOJ		; RELOJ INTERNO DE 1MHz
     CALL    CONFIG_IO
     CALL    CONFIG_TX_RX		; 10417hz
     CALL    CONFIG_ADC			; canal 0, fosc/8, adc on, justificado a la izquierda, Vref interno (0-5V)
     CALL    CONFIG_PWM1
+    CALL    CONFIG_INTER
     BANKSEL PORTA
     MOVLW .1
     MOVWF NUMPOT
@@ -59,138 +81,6 @@ START
 ; CICLO INFINITO
 ;*******************************************************************************
 LOOP:
-    CALL    DELAY_50MS
-    BCF     ADCON0,CHS3
-    BCF     ADCON0,CHS2
-    BCF     ADCON0,CHS1
-    BCF     ADCON0,CHS0
-    BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
-CHECK_ADC1:
-    BTFSC   ADCON0, GO			; revisa que terminó la conversión
-    GOTO    $-1
-    BCF	    PIR1, ADIF			; borramos la bandera del adc
-    MOVF    ADRESH, W
-    MOVWF   POT1		; mueve adresh a la variable POT1
-    
-    CALL    DELAY_50MS
-    BCF     ADCON0,CHS3
-    BCF     ADCON0,CHS2
-    BCF     ADCON0,CHS1
-    BSF     ADCON0,CHS0
-    BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
-CHECK_ADC2:
-    BTFSC   ADCON0, GO			; revisa que terminó la conversión
-    GOTO    $-1
-    BCF	    PIR1, ADIF			; borramos la bandera del adc
-    MOVF    ADRESH, W
-    MOVWF   POT2		; mueve adresh a la variable POT2
-    
-    CALL    DELAY_50MS
-    BCF     ADCON0,CHS3
-    BCF     ADCON0,CHS2
-    BSF     ADCON0,CHS1
-    BCF     ADCON0,CHS0
-    BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
-CHECK_ADC3:
-    BTFSC   ADCON0, GO			; revisa que terminó la conversión
-    GOTO    $-1
-    BCF	    PIR1, ADIF			; borramos la bandera del adc
-    MOVF    ADRESH, W
-    MOVWF   POT3		; mueve adresh a la variable POT3
-    
-    CALL    DELAY_50MS
-    BCF     ADCON0,CHS3
-    BCF     ADCON0,CHS2
-    BSF     ADCON0,CHS1
-    BSF     ADCON0,CHS0
-    BSF	    ADCON0, GO		    ; EMPIEZA LA CONVERSIÓN
-CHECK_ADC4:
-    BTFSC   ADCON0, GO			; revisa que terminó la conversión
-    GOTO    $-1
-    BCF	    PIR1, ADIF			; borramos la bandera del adc
-    MOVF    ADRESH, W
-    MOVWF   POT1		; mueve adresh a la variable POT1
-    
-CHECK_RCIF:			    ; RECIBE EN RX y lo muestra en PORTD
-    BTFSS   PIR1, RCIF
-    GOTO    CHECK_TXIF
-    MOVF    RCREG, W
-    MOVWF VARTM
-    SUBLW   .9
-    BTFSC STATUS, Z
-    CALL STARTMOT
-    BTFSC NUMPOT, 1
-    CALL SET2
-    BTFSC NUMPOT, 2
-    CALL SET3
-    BTFSC NUMPOT, 3
-    CALL SET4
-    
-CHECK_TXIF: 
-    MOVF    POT1,W		    ; ENVÍA PORTB POR EL TX
-	MOVWF   CONST  
-    MOVF   CONST,W
-    SUBLW   B'00001011'
-    BTFSS   STATUS,Z
-    GOTO	NO_IGUAL
-    MOVLW	.10
-    GOTO    FINAL
-NO_IGUAL:
-    MOVF    POT1,W
-FINAL:   
-    MOVWF   TXREG
-    BTFSS   PIR1, TXIF
-    GOTO    $-1
-
-    MOVF    POT2,W		    ; ENVÍA PORTB POR EL TX
-	MOVWF   CONST  
-    MOVF   CONST,W
-    SUBLW   B'00001011'
-    BTFSS   STATUS,Z
-    GOTO	NO_IGUAL2
-    MOVLW	.10
-    GOTO    FINAL2
-NO_IGUAL2:
-    MOVF    POT2,W
-FINAL2:   
-    MOVWF   TXREG
-    BTFSS   PIR1, TXIF
-    GOTO    $-1
-    
-    MOVF    POT3,W		    ; ENVÍA PORTB POR EL TX
-	MOVWF   CONST  
-    MOVF   CONST,W
-    SUBLW   B'00001011'
-    BTFSS   STATUS,Z
-    GOTO	NO_IGUAL3
-    MOVLW	.10
-    GOTO    FINAL3
-NO_IGUAL3:
-    MOVF    POT3,W
-FINAL3:   
-    MOVWF   TXREG
-    BTFSS   PIR1, TXIF
-    GOTO    $-1
-
-    MOVF    POT4,W		    ; ENVÍA PORTB POR EL TX
-	MOVWF   CONST  
-    MOVF   CONST,W
-    SUBLW   B'00001011'
-    BTFSS   STATUS,Z
-    GOTO	   NO_IGUAL4
-    MOVLW	  .10
-    GOTO    FINAL4
-NO_IGUAL4:
-    MOVF    POT4,W
-FINAL4:   
-    MOVWF   TXREG
-    BTFSS   PIR1, TXIF
-    GOTO    $-1
-
-    MOVLW   .11
-    MOVWF   TXREG
-    BTFSS   PIR1, TXIF
-    GOTO    $-1
     
     GOTO LOOP
 ;******************************************************************************
@@ -251,7 +141,7 @@ FINAL4:
     BSF	    TXSTA, TXEN		    ; HABILITO LA TRANSMISION
     
     BANKSEL PORTD
-    CLRF    PORTD
+   
     RETURN
 ;--------------------------------------
 CONFIG_IO
@@ -327,6 +217,14 @@ CONFIG_PWM1
     
     BANKSEL TRISC
     BCF	    TRISC, RC1		;RC1 / CCP2 SALIDA PWM
+    RETURN
+    
+;-----------------------------------------------
+CONFIG_INTER
+    BANKSEL INTCON
+    BSF	INTCON,GIE
+    BSF	INTCON,T0IE
+    BSF	INTCON,PEIE
     RETURN
   
 ;-----------------------------------------------
